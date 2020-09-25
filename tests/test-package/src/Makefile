@@ -10,11 +10,18 @@ FXS = $(SRC:yang/%.yang=../load-dir/%.fxs)
 
 ## Uncomment and patch the line below if you have a dependency to a NED
 ## or to other YANG files
-YANGPATH += ../../cisco-iosxr-cli-7.29/src/ncsc-out/modules/yang \
-	../../test-package/src/yang
+
+# YANGPATH += ../../cisco-iosxr-cli-7.29/src/ncsc-out/modules/yang \ # testing...
+# 	../../test-package/src/yang \ 
+# 	# testing
+#     ../../test-package2/src/yang
+# YANGPATH += ../../test-package1/src/yang #testing-pattern
+YANGPATH += ../../test-package1/src/yang    
+# YANGPATH += ../../test-package1/src/yang   \       
 
 NCSCPATH   = $(YANGPATH:%=--yangpath %)
 YANGERPATH = $(YANGPATH:%=--path %)
+
 
 fxs: $(DIRS) $(FXS)
 
