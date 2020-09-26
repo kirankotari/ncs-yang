@@ -1,9 +1,9 @@
 # ncs-yang
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
-[![Downloads](https://pepy.tech/badge/ncs-yang)](https://pepy.tech/project/netsim-wrapper)
-[![Downloads](https://pepy.tech/badge/ncs-yang/week)](https://pepy.tech/project/netsim-wrapper/week)
+[![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
+[![Downloads](https://pepy.tech/badge/ncs-yang)](https://pepy.tech/project/ncs-yang)
+[![Downloads](https://pepy.tech/badge/ncs-yang/week)](https://pepy.tech/project/ncs-yang/week)
 
 **ncs-yang** is a simple tool to compile yang files using **ncsc**. By compiling only the required yang files makes the developer simplier and faster to develop yang files.
 
@@ -83,7 +83,7 @@ ncs-yang
  
 ## Bug Tracking and Support
 
-- Please report any suggestions, bug reports, or annoyances with netsim-wrapper through the [Github bug tracker](https://github.com/kirankotari/ncs-yang/issues).
+- Please report any suggestions, bug reports, or annoyances with ncs-yang through the [Github bug tracker](https://github.com/kirankotari/ncs-yang/issues).
 
 
 ## License and Copyright

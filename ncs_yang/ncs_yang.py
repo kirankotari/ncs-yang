@@ -142,7 +142,7 @@ class NcsYang(Utils):
     command = []
     ncs_yang_options = []
     base_dir = ''
-    version = '1.1.0'
+    version = '1.1.1'
 
     _instance = None
     _ncs_yang_help = None
