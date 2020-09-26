@@ -142,7 +142,7 @@ class NcsYang(Utils):
     command = []
     ncs_yang_options = []
     base_dir = ''
-    version = '1.0.0'
+    version = '1.1.0'
 
     _instance = None
     _ncs_yang_help = None
@@ -165,6 +165,7 @@ class NcsYang(Utils):
     @property
     def help(self):
         if self._ncs_yang_help:
+            # need to print
             print(self._ncs_yang_help)
             self._exit
         output = '''
@@ -191,6 +192,9 @@ ncs-yang
         self._exit
 
     def fetch_paths(self, yang):
+        if os.path.isfile(yang) == False:
+            self.logger.error("file not found in the given path.")
+            self._exit
         self.path = Path(yang).absolute()
         self.cpkg_path = self.path.parent.parent.parent
         self.load_dir_path = '{}/load-dir'.format(self.cpkg_path)
@@ -203,7 +207,7 @@ ncs-yang
             return False
         return True
 
-    def get_ncsrc_path(self, cmd=['which', 'ncs']):
+    def get_ncsrc_path(self, cmd=['which', 'ncsc']):
         try:
             output = self._run_bash_command_and_collect(cmd)
             if output == '':
@@ -212,12 +216,11 @@ ncs-yang
             self.logger.error(e)
             self._exit
         except FileNotFoundError as e:
-            self.logger.error('ncs command not found. please source ncsrc file')
+            self.logger.error('ncsc command not found. please source ncsrc file')
             self._exit
-        return output
+        return output.strip()
 
     def run_command(self, cmd_lst):
-        print(cmd_lst)
         if cmd_lst[0] in self._version:
             self.get_version
         if cmd_lst[0] in self._help:
@@ -235,8 +238,8 @@ ncs-yang
                     each = Path("{}/src/{}".format(self.cpkg_path, each)).absolute()
                     ncs_yang_command += ' --yangpath {}'.format(each)
                 ncs_yang_command += ' -c -o {}/{}.fxs {}'.format(self.load_dir_path, self.p.stem, each_yang)
-        self.logger.debug(ncs_yang_command)
-        self._run_bash_command_and_forget(ncs_yang_command)
+            self.logger.info("compiling yang file: {}\n {}".format(each_yang, ncs_yang_command))
+            self._run_bash_command_and_forget(ncs_yang_command)
         self._exit
 
 def run():
