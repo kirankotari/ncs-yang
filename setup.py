@@ -26,7 +26,7 @@ setup(
     author_email = 'kirankotari@live.com',
     entry_points={
         'console_scripts': [
-            'ncs-yang=ncs_yang.ncs_yang:run'
+            'ncs-yang=ncs_yang.run:run'
         ],
     },
     install_requires=reqs,

@@ -1,0 +1,21 @@
+which ncs
+/Users/kkotari@cisco.com/ncs-5.3.3.2/bin/ncs
+.parent.parent
++ /src/ncs/yang/
+
+pre-req::
+=========
+https://graphviz.org/download/
+
+
+Ref:: links
+===========
+http://www.yang-central.org/twiki/pub/Main/YangTools/pyang.1.html
+
+
+command::
+=========
+pyang -f uml slepping.yang --uml-no=import,annotation --uml-output-directory=. > sleeping.uml
+
+pyang -f uml slepping.yang --uml-no=import,annotation --uml-inline-groupings \
+        --uml-output-directory=. > sleeping.uml

@@ -1,11 +1,11 @@
 # ncs-yang
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
+[![Version: 1.1.2](https://img.shields.io/badge/Version-1.1.2-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang)](https://pepy.tech/project/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang/week)](https://pepy.tech/project/ncs-yang/week)
 
-**ncs-yang** is a simple tool to compile yang files using **ncsc**. By compiling only the required yang files makes the developer simplier and faster to develop yang files.
+**ncs-yang** is a simple tool to compile specific yang file/s using **ncsc** and to create uml diagrams from it.
 
 - [Introduction](#introduction)
 - [Pre-requisites](#pre-requisites)
@@ -18,13 +18,13 @@
 - [Author and Thanks](#author-and-thanks)
 
 ## Introduction 
-When I was working with big projects to compile a simple yang it use to take long time due to `make clean all` compiles all the yangs persent in the given package. When looked in I was able to compile a single yang file with dependencies, which boosted me to make this lib to help other NSO developers. 
+We haven't found a simple way to compile single yang file or to create uml diagrams from it. We usuall run `make` or `make all` to compile the yang files. For uml diagrams we have to copy all the yang files from ncs and the project to an directory and generate uml diagram using `pyang -f uml` command.
 
-It makes life simplier and easier to compiles only required yang files then all of them. in the big projectsIn the process we collect Makefile dependences and compile it for you.
+Being a developer we wanted to trigger/generate with simple commands or single line commands. Which leaded to create this library. 
 
 ## Pre-requisites
 
-- ncsc command must be reconginsed by the terminal.
+- ncsc, pyang commands must be reconginsed by the terminal.
 - ncs-yang supports both trains of **python** `2.7+ and 3.1+`, the OS should not matter.
 
 ## Installation and Downloads
@@ -44,6 +44,7 @@ If you're Interested in the source, you can always pull from the github repo:
 
 ## Features
 
+### Compiling specific yang files
 - running single yang file 
 ```bash
 ⋊> ~/k/i/cfs-package on sprint $ ncs-yang src/yang/cfs-mpls.yang
@@ -58,6 +59,15 @@ If you're Interested in the source, you can always pull from the github repo:
 [ INFO ] :: [ ncs-yang ] :: compiling yang file: cfs-asa.yang
  /opt/ncs/ncs-5.2.1.2/bin/ncsc `ls cfs-asa-ann.yang > /dev/null 2>&1 && echo "-a cfs-asa-ann.yang"` --yangpath /opt/ncs/ncs-run/packages/cfs-package/src/../../common/src/yang --yangpath /opt/ncs/ncs-run/packages/cfs-package/src/../../resource-manager/src/yang -c -o /opt/ncs/ncs-run/packages/cfs-package/load-dir/cfs-asa.fxs cfs-asa.yang
 ```
+
+### Creating uml diagrams from yang files
+
+```bash 
+⋊> ~/k/i/c/s/yang on sprint $ ncs-yang cfs-mpls.yang --uml
+[ INFO ] :: [ ncs-yang ] :: generated uml diagram: cfs-mpls.uml
+```
+
+
 ## Help
 
 ```bash
@@ -71,12 +81,6 @@ ncs-yang
 ```
 
 ## FAQ
-
-- **Question:** Do I need to install ncsc too?  
- **Answer:** Not really, ncsc tool comes along with NSO. If you are working with NSO it's won't be a problem.  
-
-- **Question:** Is python mandatory for ncsc?  
- **Answer:** Yes, the library is written in python and we wanted not to be dependend on NSO versions.   
 
 - **Question:** I am seeing an error?  
  **Answer:** Error might be related to yang file, we recommend to check again beforing opening a bug.
