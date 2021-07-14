@@ -1,7 +1,7 @@
 # ncs-yang
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version: 1.2.1](https://img.shields.io/badge/Version-1.2.1-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
+[![Version: 1.2.2](https://img.shields.io/badge/Version-1.2.2-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang)](https://pepy.tech/project/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang/week)](https://pepy.tech/project/ncs-yang/week)
 
@@ -86,7 +86,7 @@ ncs-yang
  **Answer:** Error might be related to yang file, we recommend to check again beforing opening a bug.
 
 ## Change Log
-### New in 1.2.1
+### New in 1.2.2
 - Fix: Import issues, logger corrections
 
 ### New in 1.2
