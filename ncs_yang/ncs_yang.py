@@ -11,6 +11,7 @@ class NcsYang(Utils):
     ncs_yang_options = []
     generate_uml = False
     generate_jtox = False
+    generate_dsdl = False
     base_dir = ''
     version = '1.1.1'
 
@@ -37,7 +38,7 @@ class NcsYang(Utils):
             self._exit
         output = '''
 ncs-yang 
-    <YangFile or YangFiles> [--uml | --jtox]
+    <YangFile or YangFiles> [--uml | --jtox | --dsdl]
     -h | --help
     -v | --version
 '''
@@ -49,6 +50,7 @@ ncs-yang
             return
         self._uml = '--uml'
         self._jtox = '--jtox'
+        self._dsdl = '--dsdl'
         self._help = ['-h', '--help']
         self._version = ['-v', '--version']
         self.ncs_yang_options = self._help + self._version
@@ -78,8 +80,18 @@ ncs-yang
         for each in commands:
             self._run_bash_command_and_forget(each)
 
-        self.clean_uml()
-        self.logger.info("generated uml diagram: {}.uml".format(self.path.stem))
+        self.logger.info("generated jtox file: {}.jtox".format(self.path.stem))
+
+    def generate_dsdl_files(self, id):
+        commands = [
+            "cp -r {} /tmp/{}".format(self.path.as_posix(), id),
+            "pyang -f dsdl --dsdl-no-documentation --dsdl-no-dublin-core --dsdl-lax-yang-version " + 
+            "--path=/tmp/{} tmp/{}/{} -o {}.dsdl".format(id, id, self.path.name, self.path.stem),
+        ]
+        for each in commands:
+            self._run_bash_command_and_forget(each)
+
+        self.logger.info("generated dsdl file: {}.dsdl".format(self.path.stem))
         
     def clean_uml(self):
         lines = open("{}.uml".format(self.path.stem), "r").readlines()
@@ -115,6 +127,9 @@ ncs-yang
 
         if len(cmd_lst) > 1 and self._jtox in cmd_lst:
             self.generate_jtox = True
+        
+        if len(cmd_lst) > 1 and self._dsdl in cmd_lst:
+            self.generate_dsdl = True
 
         ncsc_path = self.get_ncsrc_path()
         for each_yang in cmd_lst:
@@ -134,6 +149,11 @@ ncs-yang
                     self.workspace(yang_paths, ncsc_path, create=True)
                     self.generate_jtox_files(self.id)
                     continue
+
+                if self.generate_dsdl:
+                    self.workspace(yang_paths, ncsc_path, create=True)
+                    self.generate_dsdl_files(self.id)
+                    continue
                 
                 ncs_yang_command = '{} `ls {}-ann.yang > /dev/null 2>&1 && echo "-a {}-ann.yang"`'.format(ncsc_path, self.p.stem, self.p.stem)
                 for each in yang_paths:
@@ -143,7 +163,7 @@ ncs-yang
                 self.logger.info("compiling yang file: {}\n {}".format(each_yang, ncs_yang_command))
                 self._run_bash_command_and_forget(ncs_yang_command)
 
-        if self.generate_uml:
+        if self.generate_uml or self.generate_dsdl or self.generate_jtox:
             self.workspace(None, None, delete=True)
         self._exit
 
