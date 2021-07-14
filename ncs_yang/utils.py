@@ -25,7 +25,7 @@ class Utils:
         self.__format = log_format
         self.current_path = os.path.abspath('.')
 
-        def set_logger_level(self, log_level):
+        def set_logger_level(log_level):
             if self.__format is None:
                 self.__format = '[ %(levelname)s ] :: [ %(name)s ] :: %(message)s'
             logging.basicConfig(stream=sys.stdout, level=log_level,
