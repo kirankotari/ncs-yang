@@ -1,7 +1,7 @@
 # ncs-yang
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version: 1.1.2](https://img.shields.io/badge/Version-1.1.2-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
+[![Version: 1.2](https://img.shields.io/badge/Version-1.2-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang)](https://pepy.tech/project/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang/week)](https://pepy.tech/project/ncs-yang/week)
 
@@ -84,7 +84,14 @@ ncs-yang
 
 - **Question:** I am seeing an error?  
  **Answer:** Error might be related to yang file, we recommend to check again beforing opening a bug.
- 
+
+## Change Log
+
+### New in 1.2
+- Feature: Adding UML Diagrams support
+- Feature: Adding Jtox support
+- Feature: Adding DSDL support
+
 ## Bug Tracking and Support
 
 - Please report any suggestions, bug reports, or annoyances with ncs-yang through the [Github bug tracker](https://github.com/kirankotari/ncs-yang/issues).
