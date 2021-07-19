@@ -1,0 +1,7 @@
+host: <host>
+port: <port>
+username: <username>
+packages: <nso_packages_path>
+ncs_path: <ncs_installed_path>
+ask_password: true
+store_password: false

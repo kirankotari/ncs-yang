@@ -47,7 +47,7 @@ class Utils:
         return given_string.rstrip('1234567890')
 
     def workspace(self, yang_paths, ncsc_path, create=False, delete=False):
-        def get_id(self, size=10, chars=string.ascii_uppercase + string.digits):
+        def get_id(size=10, chars=string.ascii_uppercase + string.digits):
             return ''.join(random.choice(chars) for _ in range(size))
 
         def create_workspace(yang_paths, ncsc_path):
@@ -82,12 +82,14 @@ class Utils:
         self.load_dir_path = '{}/load-dir'.format(self.cpkg_path)
         self.make_path = '{}/src/Makefile'.format(self.cpkg_path)
 
-    def is_yang_file(self, yang):
+    def is_yang_file(self, yang, stdout=False):
         self.p = Path(yang)
-        if self.p.suffix != '.yang':
+        if self.p.suffix == '.yang':
+            return True
+
+        if stdout:
             print('skipping file: {}'.format(yang))
-            return False
-        return True
+        return False
 
     def get_index(self, given_list, element):
         try:

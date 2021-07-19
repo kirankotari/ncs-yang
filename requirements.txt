@@ -1,0 +1,4 @@
+pyang>=2.5.0
+PyYAML>=5.1.2
+# YetToADD Encryption algorithms for password
+# Explore Vault
