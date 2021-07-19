@@ -1,5 +1,6 @@
 import os
 import sys
+import yaml
 import random
 import string
 import logging
@@ -51,14 +52,16 @@ class Utils:
             return ''.join(random.choice(chars) for _ in range(size))
 
         def create_workspace(yang_paths, ncsc_path):
-            ncs_yang_path = Path(ncsc_path).parent.parent.as_posix() + "/src/ncs/yang/"
             commands = [
                 "mkdir /tmp/{}".format(self.id),
-                "cp -r {} {} /tmp/{}".format(
-                    ncs_yang_path, 
-                    " ".join(yang_paths), 
-                    self.id)
             ]
+            if yang_paths is not None:
+                commands.append("cp -r {} /tmp/{}".format(" ".join(yang_paths), self.id))
+
+            if ncsc_path is not None:
+                ncs_yang_path = Path(ncsc_path).parent.parent / "src/ncs/yang/"
+                commands.append("cp -r {} /tmp/{}".format(ncs_yang_path.as_posix(), self.id))
+
             for each in commands:
                 self._run_bash_command_and_forget(each)
 
@@ -111,6 +114,8 @@ class Utils:
             self.logger.error(e)
 
     def _run_bash_command_and_collect(self, command, throw_err=True):
+        if type(command) == str:
+            command = command.split(' ')
         self.logger.debug("command `{}` running on terminal".format(' '.join(command)))
         p = subprocess.Popen(command, stdout=self.__stdout,
                              stderr=self.__stderr)
@@ -125,4 +130,10 @@ class Utils:
             if 'command not found' in err or 'Unknown command' in err:
                 raise FileNotFoundError("command not found.")
             raise ValueError(msg)
+
+    def read_yaml(self, fpath):
+        data = None
+        with open(fpath.as_posix(), 'r') as stream:
+            data = yaml.safe_load(stream)
+        return data
 

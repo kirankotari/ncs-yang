@@ -1,3 +1,4 @@
+import getpass
 import logging
 
 from pathlib import Path
@@ -10,6 +11,7 @@ class NcsYang(Utils):
     name = 'ncs-yang'
     command = []
     ncs_yang_options = []
+    workspace_destroy = False
     generate_uml = False
     generate_jtox = False
     generate_dsdl = False
@@ -108,7 +110,6 @@ ncs-yang
 
     def generate_dsdl_files(self, id=None, dep_path=None):
         if not self.check_pyang_files():
-            print("I need to copy the path's")
             self.copy_yang_files()
         commands = []
         if id is None and dep_path is None:
@@ -128,22 +129,20 @@ ncs-yang
 
     def check_pyang_files(self):
         command = "which pyang"
-        self.pyang_path = self._run_bash_command_and_collect(command)
-        print(self.pyang_path)
-        if 'pyang' not in self.pyang_path:
+        self.pyang_path = Path(self._run_bash_command_and_collect(command))
+        if 'pyang' not in self.pyang_path.as_posix():
             self.logger.error("pyang is not installed, please install pyang command: `pip install pyang`")
             self._exit
 
         paths =[
-            "ls /usr/local/share/yang",
-            "ls /usr/local/share/yang/modules",
-            "ls /usr/local/share/yang/schema",
-            "ls /usr/local/share/yang/xslt",
+            "/usr/local/share/yang",
+            "/usr/local/share/yang/modules",
+            "/usr/local/share/yang/schema",
+            "/usr/local/share/yang/xslt",
         ]
         for each in paths:
             if Path(each).exists() == False:
                 return False
-        print("I already have yang paths")
         return True
 
     def copy_yang_files(self):
@@ -157,19 +156,78 @@ ncs-yang
         command = "cp -r {} /usr/local/share/".format(ypath)
         self._run_bash_command_and_forget(command)
         
-    def yang_sync(self):
-        # TODO: need to fetch from setting.yml
-        # TODO: "which sshpass" if the output empty throw an exception message to install sshpass using following commands.
-        remote_path, local_user, local_ip, local_path = None, None, None, None
-        command = [
-            
-            "scp `find {} -name *.yang` {}@{}:{}".format(remote_path, local_user, local_ip, local_path),
-            "scp --exec=`find <path> -name <expression>` user@host:<path_where_to_copy>"
+    def yang_sync(self, file_path):
+        file_path = Path(file_path)
+        if not file_path.exists():
+            self.logger.error("File not found: {}, is the given file valid?".format(file_path))
+            self._exit
+        args = self.read_yaml(file_path)
+        x = None
+        if args.get('ask_password'):
+            x = getpass.getpass("Enter remote machine password: ")
+        else:
+            # TODO: read from the file..! If no file found throw error or ask password to enter
+            x = "dummy"
+
+        if args.get('store_password'):
+            # TODO: need to create encryption file called remote_password.bin
+            pass
+
+        if not args.get('host'):
+            self.logger.error("expecting host: <host>")
+            self._exit
+        if not args.get('port'):
+            args['port'] = 22
+            self.logger.warning("expecting port: <port>, default port 22 set")
+        if not args.get('username'):
+            args['username'] = 'admin'
+            self.logger.warning("expecting username: <username>, default user admin set")
+        if not args.get('packages'):
+            self.logger.error("expecting packages: <nso-packages-path>")
+            self._exit
+        if not args.get('ncs_path'):
+            self.logger.error("expecting ncs_path: <ncs-path>, in the remote machine type `which ncs`")
+            self._exit
+        if not args.get('local_path'):
+            self.workspace(None, None, create=True)
+            args['local_path'] = '/tmp/{}'.format(self.id)
+        
+        command = "which sshpass"
+        result = self._run_bash_command_and_collect(command)
+        if "sshpass" not in result:
+            self.logger.error("""sshpass is not installed, please install sshpass command: \n
+            for CentOS : `yum install sshpass` \n
+            for MacOs : `brew install sshpass` \n
+            for Ubuntu : `apt-get install sshpass` \n
+            """)
+            self._exit        
+
+        # TODO: need to check the scp commands are valid or not..!
+        commands = [
+            "sshpass -p {} scp -P {} {} {}@{}:`find {} -name *.yang`".format(
+                x,
+                args['port'],
+                args['local_path'], 
+                args['username'], 
+                args['host'],
+                args['packages']
+            ),
+            "sshpass -p {} scp -P {} {} {}@{}:`find {} -name *.yang`".format(
+                x,
+                args['port'],
+                args['local_path'], 
+                args['username'], 
+                args['host'],
+                Path(args['ncs_path']).parent.parent / 'src/ncs/yang'
+            ),
+            # "scp --exec=`find <path> -name <expression>` user@host:<path_where_to_copy>"
         ]
-        pass
+        for each in commands:
+            self._run_bash_command_and_forget(each)
+        return self.id
 
     def payload(self, id=None, dep_path=None):
-
+        # need to identify the right yang module
         # need to translate the yang to Jtox
         # need to use JSON2XML to convert
         """
@@ -207,6 +265,7 @@ ncs-yang
 
     def caller(self, fun, dep_path=None, yang_paths=None, ncsc_path=None):
         if dep_path is None:
+            self.workspace_destroy = True
             self.workspace(yang_paths, ncsc_path, create=True)
             fun(id=self.id)
             return
@@ -236,6 +295,12 @@ ncs-yang
             self.generate_dsdl = True
 
         if len(cmd_lst) > 1 and self._yang in cmd_lst:
+            try:
+                index = self.get_index(cmd_lst, self._path)
+                setting_file = cmd_lst[index + 1]
+                self.yang_sync(setting_file)
+            except IndentationError:
+                self.logger.error("invalid values provided, check 'ncs-yang --help'.")
             return
 
         if len(cmd_lst) > 1 and self._payload in cmd_lst:
@@ -273,8 +338,8 @@ ncs-yang
                 self.logger.info("compiling yang file: {}\n {}".format(each_yang, ncs_yang_command))
                 self._run_bash_command_and_forget(ncs_yang_command)
 
-        if self.generate_uml or self.generate_dsdl or self.generate_jtox:
-            self.workspace(None, None, delete=True)
+        if self.workspace_destroy:
+            self.workspace(None, None, delete=self.workspace_destroy)
         self._exit
 
 
