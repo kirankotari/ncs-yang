@@ -1,8 +1,8 @@
-host: <host>
-port: <port>
-username: <username>
-packages: <nso_packages_path>
-ncs_path: <ncs_installed_path>
-local_path: <local_path>
+host: 127.0.0.1
+port: 2040
+username: root
+packages: /root/nso-run54/packages
+ncs_path: /root/ncs-5.3.4/bin/ncs
+local_path: temp
 ask_password: true
 store_password: false

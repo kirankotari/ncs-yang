@@ -1,7 +1,7 @@
 # ncs-yang
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version: 1.2.3](https://img.shields.io/badge/Version-1.2.3-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
+[![Version: 1.2.3.1](https://img.shields.io/badge/Version-1.2.3.1-parrotgreen.svg)](https://github.com/kirankotari/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang)](https://pepy.tech/project/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang/week)](https://pepy.tech/project/ncs-yang/week)
 
@@ -86,6 +86,11 @@ ncs-yang
  **Answer:** Error might be related to yang file, we recommend to check again beforing opening a bug.
 
 ## Change Log
+
+### New in 1.2.3.1
+- Feature Adding yang-sync
+- Feature Adding payload convertion
+
 ### New in 1.2.3
 - Fix: Import issues, logger corrections
 

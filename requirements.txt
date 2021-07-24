@@ -1,4 +1,6 @@
 pyang>=2.5.0
 PyYAML>=5.1.2
+pycryptodome>=3.10.1
+json2xml>=3.6.0
 # YetToADD Encryption algorithms for password
 # Explore Vault

@@ -19,3 +19,42 @@ pyang -f uml slepping.yang --uml-no=import,annotation --uml-output-directory=. >
 
 pyang -f uml slepping.yang --uml-no=import,annotation --uml-inline-groupings \
         --uml-output-directory=. > sleeping.uml
+
+json2xml::
+==========
+pyang -f jtox -o employee.jtox employee.yang
+json2xml -t config -o employee.xml employee.jtox sample_employee.json
+
+https://github.com/mbj4668/pyang/wiki/XmlJson
+
+Schema::
+========
+$ yang2dsdl -s -j -b turing-machine -t config -v tm-config.xml
+== Using pre-generated schemas
+
+== Validating grammar and datatypes ...
+tm-config.xml validates.
+
+== Adding default values... done.
+
+== Validating semantic constraints ...
+No errors found.
+
+https://plajjan.github.io/tag-yang.html
+
+Validation::
+============
+kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -b hejohoj -v ../config-from-netconf $(ls *.yang | grep -vf <(grep -l belongs-to *))
+== Generating RELAX NG schema './hejohoj-data.rng'
+Done.
+
+== Generating Schematron schema './hejohoj-data.sch'
+Done.
+
+== Generating DSRL schema './hejohoj-data.dsrl'
+Done.
+
+== Validating grammar and datatypes ...
+../config-from-netconf:2: element rpc-reply: Relax-NG validity error : Expecting element data, got rpc-reply
+../config-from-netconf fails to validate
+
