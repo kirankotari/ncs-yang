@@ -256,6 +256,12 @@ class Config:
         with open(fpath, 'w') as f:
             json.dump(data, f)
 
+    @classmethod
+    def write_xml(cls, data, fpath):
+        fpath = fpath if type(fpath) == str else fpath.as_posix()
+        with open(fpath, 'w') as f:
+            data.write(f, encoding='utf-8')
+
 class Encryption:
     def __init__(self, logger):
         self.logger = logger

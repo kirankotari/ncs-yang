@@ -57,7 +57,19 @@ ncs-yang
     # TODO: to generate schema
     --schema <yang> [--json | --xml | --yml] 
     # TODO: to validate we need (*.rng, *.sch, *.dsrl)
-    --validate <YangFile> <payload>     to validate given payload
+    --validate <payload>
+        <YangFile or YangFiles>        to validate given payload
+    # TODO: after generate schema, need to map the type to dummy variables
+    # TODO: how will you map the leafref, deref, etc?
+    # TODO: how to identify mandatory and not mandatory variables?
+    # TODO: planning to return test cases in xml format
+    --test-plan
+        <YangFile or YangFiles>        will return test plan
+    --test-cases
+        <YangFile or YangFiles>        will return test cases
+        <schema> <test-plan>           will return test cases
+    # TODO: need to prepare simple GUI
+    # TODO: need to write unit testing
     -h | --help
     -v | --version
 '''
@@ -70,10 +82,11 @@ ncs-yang
         self._l = '--log'
         self._uml = '--uml'
         self._jtox = '--jtox'
-        self._dsdl = '--dsdl'
+        self._dsdl = '--dsdl'   
         self._path = '--path'
         self._yang = '--yang-sync'
         self._payload = '--payload'
+        self._schema = '--schema'
         self._help = ['-h', '--help']
         self._version = ['-v', '--version']
         self.ncs_yang_options = self._help + self._version
@@ -150,6 +163,7 @@ ncs-yang
 
     def check_pyang_files(self):
         command = "which pyang"
+        # command = "type -a pyang"
         # TODO: type -a pyang will list python and ncs pyang paths.
         self.pyang_path = str(self._run_bash_command_and_collect(command)).strip()
         if 'pyang' not in self.pyang_path:
@@ -259,16 +273,6 @@ ncs-yang
         return args['local_path'] if args['local_path'] else self.id
 
     def payload(self, cmd_lst, dep_path):
-        # need to identify the right yang module
-        # need to translate the yang to Jtox
-        # need to use JSON2XML to convert
-        """
-        json2xml -> payload convertion for json to xml
-        which pyang
-        type -a pyang
-        python3 -c "import os as _; print(_.__file__)"
-        find . -name <filename>
-        """
         payload_file = Path(cmd_lst[0])
         if not payload_file.exists():
             self.logger.error("couldn't able to find given payload")
@@ -306,6 +310,19 @@ ncs-yang
             Config.write_json(data, json_file)
             if len(list_of_yangs) > 0:
                 json2xml_payload(json_file, list_of_yangs, dep_path)
+
+    def schema(self):
+        # pyang -f sample-xml-skeleton --sample-xml-skeleton-doctype=config sleeping.yang
+        # collect data
+        # for elem in root.iter():
+        # ...:     for child in list(elem):
+        # ...:         if 'private' in child.tag:
+        # ...:             elem.remove(child)
+        # Config.write_xml(elem, '<filename>'.xml)
+        pass
+
+    def yang_testsuite(self):
+        pass
 
     def clean_uml(self):
         lines = open("{}.uml".format(self.path.stem), "r").readlines()
