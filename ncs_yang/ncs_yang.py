@@ -15,6 +15,7 @@ class NcsYang(Utils, Encryption):
     generate_uml = False
     generate_jtox = False
     generate_dsdl = False
+    generate_schema = False
     pyang_path = None
     base_dir = ''
     version = '1.2.3.1'
@@ -44,6 +45,7 @@ class NcsYang(Utils, Encryption):
         output = '''
 ncs-yang 
     <YangFile or YangFiles> [--uml | --jtox | --dsdl] 
+    --schema <yang>         [--json | --xml | --yml]
     --yang-sync <settings.yml>          to collect yang files from remote machine
     --payload <payload.json> 
         <YangFile or YangFiles>         will return payload.xml
@@ -52,24 +54,6 @@ ncs-yang
         <YangFile or YangFiles>         will return payload.xml
     --log [info | debug]
     --path <dependency yang path>
-    
-    
-    # TODO: to generate schema
-    --schema <yang> [--json | --xml | --yml] 
-    # TODO: to validate we need (*.rng, *.sch, *.dsrl)
-    --validate <payload>
-        <YangFile or YangFiles>        to validate given payload
-    # TODO: after generate schema, need to map the type to dummy variables
-    # TODO: how will you map the leafref, deref, etc?
-    # TODO: how to identify mandatory and not mandatory variables?
-    # TODO: planning to return test cases in xml format
-    --test-plan
-        <YangFile or YangFiles>        will return test plan
-    --test-cases
-        <YangFile or YangFiles>        will return test cases
-        <schema> <test-plan>           will return test cases
-    # TODO: need to prepare simple GUI
-    # TODO: need to write unit testing
     -h | --help
     -v | --version
 '''
@@ -162,15 +146,24 @@ ncs-yang
         return outpath
 
     def check_pyang_files(self):
-        command = "which pyang"
-        # command = "type -a pyang"
-        # TODO: type -a pyang will list python and ncs pyang paths.
-        self.pyang_path = str(self._run_bash_command_and_collect(command)).strip()
+        # command = "which pyang"
+        # self.pyang_path = str(self._run_bash_command_and_collect(command)).strip()
+        
+        # type -a pyang will list python and ncs pyang paths.
+        # matching first occurance..
+        command = "type -a pyang"
+        lst = str(self._run_bash_command_and_collect(command)).split("\n")
+        for each in lst:
+            i = str(each).lower()
+            if 'pyang' in i and ('python' in i or 'env' in i):
+                self.pyang_path = each.split()[-1]
+                break
+
         if 'pyang' not in self.pyang_path:
             self.logger.error("pyang is not installed, please install pyang command: `pip install pyang`")
             self._exit
 
-        if 'python' not in self.pyang_path.lower() and 'pyenv' not in self.pyang_path.lower():
+        if 'python' not in self.pyang_path.lower() and 'env' not in self.pyang_path.lower():
             self.logger.error("we are getting ncs pyang, but we required python pyang")
             self.logger.error("add python path before ncs path, and source them.")
             self._exit
@@ -311,15 +304,47 @@ ncs-yang
             if len(list_of_yangs) > 0:
                 json2xml_payload(json_file, list_of_yangs, dep_path)
 
-    def schema(self):
-        # pyang -f sample-xml-skeleton --sample-xml-skeleton-doctype=config sleeping.yang
-        # collect data
-        # for elem in root.iter():
-        # ...:     for child in list(elem):
-        # ...:         if 'private' in child.tag:
-        # ...:             elem.remove(child)
-        # Config.write_xml(elem, '<filename>'.xml)
-        pass
+    def get_xml_schema(self, dep_path):
+        command = "cp -R {} {}".format(self.path.as_posix(), dep_path)
+        self._run_bash_command_and_forget(command)
+
+        temp = "{} -f sample-xml-skeleton {} --path={} --sample-xml-skeleton-doctype=config"
+        command = temp.format(self.pyang_path, self.path.name, dep_path)
+        data = self._run_bash_command_and_collect(command)
+        for elem in data.iter():
+            for child in list(elem):
+                if 'private' in child.tag:
+                    elem.remove(child)
+        return data
+
+    def schema(self, id=None, dep_path=None, format=None):
+        if format is None:
+            return
+
+        format = str(format).lower()
+        if id is None and dep_path is None:
+            self.logger.error("either workspace if or dependency path need to be provided..")
+        if dep_path is None:
+            dep_path = "/tmp/{}".format(id)
+
+        data = self.get_xml_schema(dep_path)
+        outpath = "{}.xml".format(self.path.stem)
+        Config.write_xml(data, outpath)
+        
+        if 'json' in format:
+            Config.write_json(self.xml2json(outpath), self.path.stem + '.json')
+
+        if 'yaml' in format:
+            Config.write_yaml(self.xml2json(outpath), self.path.stem + '.yml')
+        
+        if Path(self.path.stem + '.json').exists():
+            self.logger.info("generated json schema file: {}".format(outpath))
+        elif Path(self.path.stem + '.yml').exists():
+            self.logger.info("generated yml schema file: {}".format(outpath))
+        elif Path(self.path.stem + '.xml').exists():
+            self.logger.info("generated xml schema file: {}".format(outpath))
+        else:
+            self.logger.error("failed to generate xml schema file")
 
     def yang_testsuite(self):
         pass
@@ -365,7 +390,7 @@ ncs-yang
         self.logger.info("compiling yang file: {}\n {}".format(each_yang, ncs_yang_command))
         self._run_bash_command_and_forget(ncs_yang_command)
 
-    def caller(self, fun, dep_path=None):
+    def caller(self, fun, dep_path=None, **kwargs):
         ncsc_path = self.get_ncsrc_path()
         if dep_path is None:
             obj = MakeFile()
@@ -377,12 +402,13 @@ ncs-yang
 
             self.workspace_destroy = True
             self.workspace(yang_paths, ncsc_path, create=True)
-            fun(id=self.id)
+            fun(id=self.id, **kwargs)
             return
-        fun(dep_path=dep_path)
+        fun(dep_path=dep_path, **kwargs)
 
     def run_command(self, cmd_lst):
         dep_path = None
+        schema_format = None
         if cmd_lst[0] in self._version:
             self.get_version
         if cmd_lst[0] in self._help:
@@ -416,6 +442,15 @@ ncs-yang
         if len(cmd_lst) > 1 and self._dsdl in cmd_lst:
             self.generate_dsdl = True
 
+        if len(cmd_lst) > 1 and self._schema in cmd_lst:
+            self.generate_schema = True
+            try:
+                index = self.get_index(cmd_lst, self._schema)
+                schema_format = cmd_lst[index + 1]
+            except IndentationError:
+                self.logger.error("invalid values provided, check 'ncs-yang --help'.")
+            return
+
         if len(cmd_lst) > 1 and self._yang in cmd_lst:
             try:
                 index = self.get_index(cmd_lst, self._yang)
@@ -434,12 +469,16 @@ ncs-yang
             return
 
         for each_yang in cmd_lst:
-            if each_yang in [self._uml, self._jtox, self._dsdl, self._path]:
+            if each_yang in [self._uml, self._jtox, self._dsdl, self._path, self._schema]:
                 continue
             if self.is_yang_file(each_yang):
                 self.logger.info("index: 0 for {}, {}".format(cmd_lst[0], each_yang))
                 self.fetch_paths(each_yang)
                 
+                if self.generate_schema:
+                    self.caller(self.schema, dep_path, schema_format)
+                    continue
+
                 if self.generate_uml:
                     self.caller(self.generate_uml_diagram, dep_path)
                     continue

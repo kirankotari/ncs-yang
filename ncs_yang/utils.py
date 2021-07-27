@@ -154,6 +154,7 @@ class Utils:
         out, err = p.stdout, p.stderr
         if err == '' or 'env.sh' in err:
             return out
+        return err
 
     def xml2json(self, xml_path):
         def strip_tag(tag):
@@ -261,6 +262,13 @@ class Config:
         fpath = fpath if type(fpath) == str else fpath.as_posix()
         with open(fpath, 'w') as f:
             data.write(f, encoding='utf-8')
+
+    @classmethod
+    def write_yaml(cls, data, fpath):
+        fpath = fpath if type(fpath) == str else fpath.as_posix()
+        with open(fpath, "w") as f:
+            yaml.dump(data, f)
+
 
 class Encryption:
     def __init__(self, logger):
