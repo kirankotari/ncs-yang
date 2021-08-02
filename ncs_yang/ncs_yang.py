@@ -49,7 +49,8 @@ ncs-yang
     --yang-sync <settings.yml>          to collect yang files from remote machine
     --payload <payload.json> 
         <YangFile or YangFiles>         will return payload.xml
-    --payload <payload.xml>             will return payload.json
+    --payload <payload.xml>
+        <YangFile or YangFiles>         will return payload.json
     --payload <payload.yml>             will return payload.json
         <YangFile or YangFiles>         will return payload.xml
     --log [info | debug]
@@ -74,6 +75,7 @@ ncs-yang
         self._help = ['-h', '--help']
         self._version = ['-v', '--version']
         self.ncs_yang_options = self._help + self._version
+        self.ncs_yang_options += [self._l, self._path, self._schema, self._payload, self._yang]
 
     @property
     def get_version(self):
@@ -280,11 +282,15 @@ ncs-yang
             self.logger.error("couldn't able to convert json payload to xml, required yang file.!")
             self._exit
 
-        def json2xml_payload(payload, list_of_yangs, dep_path):
+        def get_list_of_toxs(list_of_yangs):
             list_of_toxs = []
             for each in list_of_yangs:
                 self.fetch_paths(each)
                 list_of_toxs.append(self.caller(self.generate_jtox_files, dep_path))
+            return list_of_toxs
+
+        def json2xml_payload(payload, list_of_yangs, dep_path):
+            list_of_toxs = get_list_of_toxs(list_of_yangs)
             xml_file = "{}/{}.xml".format(payload.parent, payload.stem)
             list_of_toxs = " ".join(list_of_toxs)
             command = "json2xml -t config -o {} {} {}".format(xml_file, list_of_toxs, payload.as_posix())
@@ -294,10 +300,11 @@ ncs-yang
             json2xml_payload(payload_file, list_of_yangs, dep_path)
 
         if payload_file.suffix == '.xml':
+            list_of_toxs = get_list_of_toxs(list_of_yangs)
             json_file = "{}/{}.json".format(payload_file.parent, payload_file.stem)
-            Config.write_json(self.xml2json(payload_file), json_file)
+            Config.write_json(self.xml2json(payload_file, list_of_toxs), json_file)
 
-        if payload_file.suffix == '.yml':
+        if payload_file.suffix == '.yml' or payload_file.suffix == '.yaml':
             data = Config.read_yaml(payload_file)
             json_file = "{}/{}.json".format(payload_file.parent, payload_file.stem)
             Config.write_json(data, json_file)
@@ -332,10 +339,12 @@ ncs-yang
         Config.write_xml(data, outpath)
         
         if 'json' in format:
-            Config.write_json(self.xml2json(outpath), self.path.stem + '.json')
+            pass
+            # Config.write_json(self.xml2json(outpath), self.path.stem + '.json')
 
         if 'yaml' in format:
-            Config.write_yaml(self.xml2json(outpath), self.path.stem + '.yml')
+            pass
+            # Config.write_yaml(self.xml2json(outpath), self.path.stem + '.yml')
         
         if Path(self.path.stem + '.json').exists():
             self.logger.info("generated json schema file: {}".format(outpath))
@@ -402,21 +411,10 @@ ncs-yang
 
             self.workspace_destroy = True
             self.workspace(yang_paths, ncsc_path, create=True)
-            fun(id=self.id, **kwargs)
-            return
-        fun(dep_path=dep_path, **kwargs)
+            return fun(id=self.id, **kwargs)
+        return fun(dep_path=dep_path, **kwargs)
 
     def run_command(self, cmd_lst):
-        dep_path = None
-        schema_format = None
-        if cmd_lst[0] in self._version:
-            self.get_version
-        if cmd_lst[0] in self._help:
-            self.help
-
-        if not self.check_pyang_files():
-            self.copy_pyang_files()
-
         if len(cmd_lst) > 1 and self._l in cmd_lst:
             try:
                 index = self.get_index(cmd_lst, self._l)
@@ -425,6 +423,17 @@ ncs-yang
                     Utils.__init__(self, log_level=logging.DEBUG, log_format=self.log_format)
             except IndentationError:
                 self.logger.error("invalid values provided, check 'ncs-yang --help'.")
+
+        dep_path = None
+        schema_format = None
+        if cmd_lst[0] in self._version:
+            self.get_version
+        if cmd_lst[0] in self._help:
+            self.help
+
+        if not self.check_pyang_files():
+            self.logger.debug("copying pyangs")
+            self.copy_pyang_files()
 
         if len(cmd_lst) > 1 and self._path in cmd_lst:
             try:
@@ -455,6 +464,7 @@ ncs-yang
             try:
                 index = self.get_index(cmd_lst, self._yang)
                 setting_file = cmd_lst[index + 1]
+                self.logger.debug("calling yang-sync")
                 self.yang_sync(setting_file)
             except IndentationError:
                 self.logger.error("invalid values provided, check 'ncs-yang --help'.")
@@ -463,6 +473,7 @@ ncs-yang
         if len(cmd_lst) > 1 and self._payload in cmd_lst:
             try:
                 index = self.get_index(cmd_lst, self._payload)
+                self.logger.debug("calling payload translator")
                 self.payload(cmd_lst[index + 1:], dep_path)
             except IndentationError:
                 self.logger.error("invalid values provided, check 'ncs-yang --help'.")
@@ -472,22 +483,26 @@ ncs-yang
             if each_yang in [self._uml, self._jtox, self._dsdl, self._path, self._schema]:
                 continue
             if self.is_yang_file(each_yang):
-                self.logger.info("index: 0 for {}, {}".format(cmd_lst[0], each_yang))
+                self.logger.debug("yang file: {}".format(each_yang))
                 self.fetch_paths(each_yang)
                 
                 if self.generate_schema:
+                    self.logger.debug("calling schema generator")
                     self.caller(self.schema, dep_path, schema_format)
                     continue
 
                 if self.generate_uml:
+                    self.logger.debug("creating uml diagram")
                     self.caller(self.generate_uml_diagram, dep_path)
                     continue
 
                 if self.generate_jtox:
+                    self.logger.debug("generating tox file")
                     self.caller(self.generate_jtox_files, dep_path)
                     continue
 
                 if self.generate_dsdl:
+                    self.logger.debug("generating dsdl file")
                     self.caller(self.generate_dsdl_files, dep_path)
                     continue
 

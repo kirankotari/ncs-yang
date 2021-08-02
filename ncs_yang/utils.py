@@ -156,14 +156,16 @@ class Utils:
             return out
         return err
 
-    def xml2json(self, xml_path):
+    def xml2json(self, xml_path, list_of_toxs):
         def strip_tag(tag):
             split_array = tag.split('}')
-            if len(split_array) > 1:
-                tag = split_array[1]
-                ns = split_array[0].split('/')[-1]
-                return "{}:{}".format(ns, tag)
-            return tag
+            if len(split_array) <= 1:
+                return tag
+            tag = split_array[1]
+            ns = split_array[0].split('/')[-1]
+            if "netconf:base" in ns:
+                return tag
+            return "{}:{}".format(ns, tag)
 
         def elem_to_internal(elem, strip_ns=1, strip=1):
             """Convert an Element into an internal dictionary (not JSON!)."""
@@ -185,18 +187,14 @@ class Utils:
                 value = v[tag]
 
                 try:
-                    # add to existing list for this tag
                     d[tag].append(value)
                 except AttributeError:
-                    # turn existing entry into a list
                     d[tag] = [d[tag], value]
                 except KeyError:
-                    # add a new non-list entry
                     d[tag] = value
             text = elem.text
             tail = elem.tail
             if strip:
-                # ignore leading and trailing whitespace
                 if text:
                     text = text.strip()
                 if tail:
@@ -206,19 +204,94 @@ class Utils:
                 d['#tail'] = tail
 
             if d:
-                # use #text element if other attributes exist
                 if text:
                     d["#text"] = text
             else:
-                # text is the value if no attributes
                 d = text or None
             return {elem_tag: d}
 
-        elem = ET.parse(xml_path.as_posix())
+        def top_tag_cleanup(d):
+            if d.get('config'):
+                return d['config']
+            if d.get('data'):
+                return d['data']
+            return d
+        
+        def recursive_method(d, i):
+            if i[1] not in ['list', 'container']:
+                return d
+            if d.get(i[0], None) is None:
+                return d
+            if i[1] == 'container':
+                if i[2] is None:
+                    return d
+                for j in i[2]:
+                    d[i[0]] = recursive_method(d.get(i[0]), j)
+                # recursive_method
+                pass
+            if i[1] == 'list':
+                if i[2] is None:
+                    return d
+                for j in i[2]:
+                    d[i[0]] = recursive_method(d.get(i[0]), j)
+                # recursive_method
+                if type(d.get(i[0], None)) != list:
+                    d[i[0]] = [d.get(i[0])]
+            return d
+
+        def json_corrections(d, list_of_toxs):
+            for i in list_of_toxs:
+                jdata = Config.read_json(i)
+                jformat = get_lists(jdata.get('tree', {}))
+                ns = None
+                for j in jformat:
+                    j = list(j)
+                    if ns is None:
+                        ns = j[0].split(":")[0]
+                    j[0] = "{}:{}".format(ns, j[0]) if ':' not in j[0] else j[0]
+                    d = recursive_method(d, j)
+            return d
+
+        def yang_nodes(data):
+            temp = {}
+            if type(data) == dict:
+                for i in data.keys():
+                    d = yang_nodes(data[i])
+                    temp[i] = d
+            elif type(data) == list:
+                for i in data:
+                    d = yang_nodes(i)
+                    return d
+            else:
+                return data
+            return temp
+
+        def get_lists(data):
+            child = []
+            try:
+                temp = yang_nodes(data)
+            except Exception as e:
+                temp = data
+            if type(data) == str:
+                return
+            for k, v in temp.items():
+                if v in ['list', 'container'] and len(data[k]) > 1:
+                    child.append((k, v, get_lists(data[k][1])))
+            if len(child):
+                return child
+                
+        try:
+            elem = ET.parse(xml_path.as_posix())
+        except ET.ParseError as e:
+            self.logger.error("invalid xml file format found.")
+            self._exit
+
         if hasattr(elem, 'getroot'):
             elem = elem.getroot()
 
-        return elem_to_internal(elem)
+        d = top_tag_cleanup(elem_to_internal(elem))
+        d = json_corrections(d, list_of_toxs)
+        return d
 
 class Config:
     __config = {}
@@ -242,6 +315,14 @@ class Config:
         if envvar in os.environ and Config.isfile(os.environ[envvar]):
             path = config_unicode(os.environ[envvar])
         return path
+
+    @classmethod
+    def read_json(cls, fpath):
+        data = None
+        fpath = fpath if type(fpath) == str else fpath.as_posix()
+        with open(fpath, 'r') as stream:
+            data = json.load(stream)
+        return data
 
     @classmethod
     def read_yaml(cls, fpath):
