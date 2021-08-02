@@ -87,9 +87,10 @@ ncs-yang
 
 ## Change Log
 
-### New in 1.2.3.1
+### New in 1.2.4
 - Feature Adding yang-sync
 - Feature Adding payload convertion
+- Feature Adding schema generator
 
 ### New in 1.2.3
 - Fix: Import issues, logger corrections
