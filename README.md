@@ -10,8 +10,8 @@
 - [Introduction](#introduction)
 - [Pre-requisites](#pre-requisites)
 - [Installation and Downloads](#installation-and-downloads)
-- [Features](#features)
 - [Help](#help)
+- [Features](#features)
 - [FAQ](#faq)
 - [Bug Tracking and Support](#bug-tracking-and-support)
 - [License and Copyright](#license-and-copyright)
@@ -42,6 +42,27 @@ If you're Interested in the source, you can always pull from the github repo:
 
 - From github `git clone https://github.com/kirankotari/ncs-yang.git`
 
+## Help
+
+```bash
+⋊> ~/k/i/ncs-yang on master $ ncs-yang --help
+
+ncs-yang 
+    <YangFile or YangFiles> [--uml | --jtox | --dsdl] 
+    --schema <yang>         [--json | --xml | --yml]
+    --yang-sync <settings.yml>          to collect yang files from remote machine
+    --payload <payload.json> 
+        <YangFile or YangFiles>         will return payload.xml
+    --payload <payload.xml>
+        <YangFile or YangFiles>         will return payload.json
+    --payload <payload.yml>             will return payload.json
+        <YangFile or YangFiles>         will return payload.xml
+    --log [info | debug]
+    --path <dependency yang path>
+    -h | --help
+    -v | --version
+```
+
 ## Features
 
 ### Compiling specific yang files
@@ -67,18 +88,6 @@ If you're Interested in the source, you can always pull from the github repo:
 [ INFO ] :: [ ncs-yang ] :: generated uml diagram: cfs-mpls.uml
 ```
 
-
-## Help
-
-```bash
-⋊> ~/k/i/ncs-yang on master $ ncs-yang --help
-
-ncs-yang
-    <filename.yang>
-    <path-to-filename.yang>
-    -h | --help
-    -v | --version
-```
 
 ## FAQ
 
