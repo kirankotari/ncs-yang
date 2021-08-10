@@ -117,7 +117,7 @@ ncs-yang
             dep_path = "/tmp/{}".format(id)
             commands.append("cp -R {} {}".format(self.path.as_posix(), dep_path))
         commands.append(
-            "{} -f jtox {} --path={} -o {} 2> /dev/null".format(self.pyang_path, self.path.name, dep_path, outpath)
+            "{} -f jtox {} --path={} -o {} 2> /dev/null".format(self.pyang_path, self.path, dep_path, outpath)
         )
         self.loop_commands(commands)
 
@@ -148,24 +148,28 @@ ncs-yang
         return outpath
 
     def check_pyang_files(self):
+        self.pyang_path = None
         # command = "which pyang"
         # self.pyang_path = str(self._run_bash_command_and_collect(command)).strip()
-        
         # type -a pyang will list python and ncs pyang paths.
-        # matching first occurance..
+        
         command = "type -a pyang"
         lst = str(self._run_bash_command_and_collect(command)).split("\n")
+        ncs_pyang_bool = lambda x: 'nso' not in x and 'ncs' not in x and 'current' not in x
+        
         for each in lst:
             i = str(each).lower()
-            if 'pyang' in i and ('python' in i or 'env' in i):
+            if 'pyang' in i and ('python' in i or 'env' in i or ncs_pyang_bool(i)):
                 self.pyang_path = each.split()[-1]
                 break
+            else:
+                self.pyang_path = each.split()[-1]
 
-        if 'pyang' not in self.pyang_path:
+        if self.pyang_path is None or 'pyang' not in self.pyang_path:
             self.logger.error("pyang is not installed, please install pyang command: `pip install pyang`")
             self._exit
 
-        if 'python' not in self.pyang_path.lower() and 'env' not in self.pyang_path.lower():
+        if not ncs_pyang_bool(self.pyang_path):
             self.logger.error("we are getting ncs pyang, but we required python pyang")
             self.logger.error("add python path before ncs path, and source them.")
             self._exit
@@ -222,6 +226,8 @@ ncs-yang
             x = getpass.getpass("Enter remote machine password: ")
         else:
             if not Path("./remote_password.bin").exists():
+                if args.get('sshkey_file_path', None):
+                    sshkey_file_path = True
                 self.logger.warning("Couldn't able to find password file in the current directory")
                 x = getpass.getpass("Enter remote machine password to continue: ")
             else:
@@ -232,11 +238,11 @@ ncs-yang
         
         command = "which sshpass"
         result = self._run_bash_command_and_collect(command)
-        if "sshpass" not in result:
-            self.logger.error("""sshpass is not installed, please install sshpass command: \n
-            for CentOS : `yum install sshpass` \n
-            for MacOs : `brew install sshpass` \n
-            for Ubuntu : `apt-get install sshpass` \n
+        if result is None or "sshpass" not in result:
+            self.logger.error("""sshpass is not installed, please install sshpass command:
+            for CentOS : `yum install sshpass`
+            for MacOs : `brew install sshpass`
+            for Ubuntu : `apt-get install sshpass`
             """)
             self._exit        
 
@@ -259,7 +265,10 @@ ncs-yang
                 args['host'],
                 Path(args['ncs_path']).parent.parent / 'src/ncs/yang',
                 temp
-            ),
+            )
+        ]
+        # TODO: if you find tar file extract them...!
+        commands += [
             "mv `find {} -name *.yang` {}".format(temp, args['local_path']),
             "rm -rf {}".format(temp)
         ]
@@ -289,24 +298,37 @@ ncs-yang
                 list_of_toxs.append(self.caller(self.generate_jtox_files, dep_path))
             return list_of_toxs
 
+        def merge_list_of_toxs(list_of_toxs, name):
+            toxs_dict = {}
+            for each_tox in list_of_toxs:
+                toxs_dict.update(each_tox)
+            Config.write_json(data, name)
+
         def json2xml_payload(payload, list_of_yangs, dep_path):
             list_of_toxs = get_list_of_toxs(list_of_yangs)
-            xml_file = "{}/{}.xml".format(payload.parent, payload.stem)
+            xml_file = Path("{}/{}.xml".format(payload.parent, payload.stem)).absolute()
             list_of_toxs = " ".join(list_of_toxs)
-            command = "json2xml -t config -o {} {} {}".format(xml_file, list_of_toxs, payload.as_posix())
-            self._run_bash_command_and_forget(command)
+            # TODO: need to merge the list of toxs to single file..!
+            name = "temp_tox.jtox"
+            merge_list_of_toxs(list_of_toxs, name)
+            commands = [
+                "json2xml -t config -o {} {} {}".format(xml_file, name, payload.as_posix()),
+                "rm -rf {}".format(name)
+            ]
+            for each in commands:
+                self._run_bash_command_and_forget(each)
 
         if payload_file.suffix == '.json':
             json2xml_payload(payload_file, list_of_yangs, dep_path)
 
         if payload_file.suffix == '.xml':
             list_of_toxs = get_list_of_toxs(list_of_yangs)
-            json_file = "{}/{}.json".format(payload_file.parent, payload_file.stem)
+            json_file = Path("{}/{}.json".format(payload_file.parent, payload_file.stem)).absolute()
             Config.write_json(self.xml2json(payload_file, list_of_toxs), json_file)
 
         if payload_file.suffix == '.yml' or payload_file.suffix == '.yaml':
             data = Config.read_yaml(payload_file)
-            json_file = "{}/{}.json".format(payload_file.parent, payload_file.stem)
+            json_file = Path("{}/{}.json".format(payload_file.parent, payload_file.stem)).absolute()
             Config.write_json(data, json_file)
             if len(list_of_yangs) > 0:
                 json2xml_payload(json_file, list_of_yangs, dep_path)

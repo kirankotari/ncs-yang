@@ -4,5 +4,6 @@ username: root
 packages: /root/nso-run54/packages
 ncs_path: /root/ncs-5.3.4/bin/ncs
 local_path: temp
-ask_password: true
+sshkey_file_path: <>
+ask_password: false
 store_password: false
