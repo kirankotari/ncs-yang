@@ -18,7 +18,7 @@ class NcsYang(Utils, Encryption):
     generate_schema = False
     pyang_path = None
     base_dir = ''
-    version = '1.2.4'
+    version = '1.2.4.1'
  
     _instance = None
     _ncs_yang_help = None
