@@ -279,15 +279,16 @@ class Utils:
                     child.append((k, v, get_lists(data[k][1])))
             if len(child):
                 return child
-                
-        try:
-            elem = ET.parse(xml_path.as_posix())
-        except ET.ParseError as e:
-            self.logger.error("invalid xml file format found. {}".format(e))
-            self._exit
 
-        if hasattr(elem, 'getroot'):
-            elem = elem.getroot()
+        elem = Config.read_xml(xml_path)        
+        # try:
+        #     elem = ET.parse(xml_path.as_posix())
+        # except ET.ParseError as e:
+        #     self.logger.error("invalid xml file format found. {}".format(e))
+        #     self._exit
+
+        # if hasattr(elem, 'getroot'):
+        #     elem = elem.getroot()
 
         d = top_tag_cleanup(elem_to_internal(elem))
         d = json_corrections(d, list_of_toxs)
@@ -349,6 +350,22 @@ class Config:
         fpath = fpath if type(fpath) == str else fpath.as_posix()
         with open(fpath, "w") as f:
             yaml.dump(data, f)
+
+    @classmethod
+    def read_xml(cls, fpath):
+        fpath = fpath if type(fpath) == str else fpath.as_posix()
+        try:
+            root = None
+            elem = ET.parse(fpath)
+            if hasattr(elem, 'getroot'):
+                root = elem.getroot()
+            return root
+        except ET.ParseError as e:
+            raise(e)
+
+    @classmethod
+    def xml2string(cls, xml):
+        return ET.tostring(xml).decode()
 
 
 class Encryption:

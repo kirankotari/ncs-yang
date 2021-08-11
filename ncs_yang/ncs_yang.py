@@ -18,7 +18,7 @@ class NcsYang(Utils, Encryption):
     generate_schema = False
     pyang_path = None
     base_dir = ''
-    version = '1.2.4.2'
+    version = '1.2.4.3'
  
     _instance = None
     _ncs_yang_help = None
@@ -297,10 +297,6 @@ ncs-yang
                 self.fetch_paths(each)
                 list_of_toxs.append(self.caller(self.generate_jtox_files, dep_path))
             return list_of_toxs
-
-        def identify_yang_file(prefix):
-            command = ""
-            pass
 
         def merge_list_of_toxs(list_of_toxs, name):
             toxs_dict = {"modules": dict(), "tree": dict(), "annotations": dict()}
