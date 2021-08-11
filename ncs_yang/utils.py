@@ -283,7 +283,7 @@ class Utils:
         try:
             elem = ET.parse(xml_path.as_posix())
         except ET.ParseError as e:
-            self.logger.error("invalid xml file format found.")
+            self.logger.error("invalid xml file format found. {}".format(e))
             self._exit
 
         if hasattr(elem, 'getroot'):

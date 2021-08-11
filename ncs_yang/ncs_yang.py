@@ -298,17 +298,24 @@ ncs-yang
                 list_of_toxs.append(self.caller(self.generate_jtox_files, dep_path))
             return list_of_toxs
 
+        def identify_yang_file(prefix):
+            command = ""
+            pass
+
         def merge_list_of_toxs(list_of_toxs, name):
-            toxs_dict = {}
+            toxs_dict = {"modules": dict(), "tree": dict(), "annotations": dict()}
             for each_tox in list_of_toxs:
-                toxs_dict.update(each_tox)
-            Config.write_json(data, name)
+                new_jtox = Config.read_json(each_tox)
+                toxs_dict["modules"].update(new_jtox["modules"])
+                toxs_dict["tree"].update(new_jtox["tree"])
+                toxs_dict["annotations"].update(new_jtox["annotations"])
+                # toxs_dict.update(Config.read_json(each_tox))
+            Config.write_json(toxs_dict, name)
 
         def json2xml_payload(payload, list_of_yangs, dep_path):
             list_of_toxs = get_list_of_toxs(list_of_yangs)
             xml_file = Path("{}/{}.xml".format(payload.parent, payload.stem)).absolute()
-            list_of_toxs = " ".join(list_of_toxs)
-            # TODO: need to merge the list of toxs to single file..!
+            # list_of_toxs = " ".join(list_of_toxs)
             name = "temp_tox.jtox"
             merge_list_of_toxs(list_of_toxs, name)
             commands = [
@@ -323,8 +330,11 @@ ncs-yang
 
         if payload_file.suffix == '.xml':
             list_of_toxs = get_list_of_toxs(list_of_yangs)
+            name = "temp_tox.jtox"
+            merge_list_of_toxs(list_of_toxs, name)
             json_file = Path("{}/{}.json".format(payload_file.parent, payload_file.stem)).absolute()
-            Config.write_json(self.xml2json(payload_file, list_of_toxs), json_file)
+            Config.write_json(self.xml2json(payload_file, [name]), json_file)
+            self._run_bash_command_and_forget("rm -rf {}".format(name))
 
         if payload_file.suffix == '.yml' or payload_file.suffix == '.yaml':
             data = Config.read_yaml(payload_file)
@@ -402,7 +412,8 @@ ncs-yang
         except FileNotFoundError as e:
             self.logger.error('ncsc command not found. please source ncsrc file')
             self._exit
-        return output.strip()
+        if output:
+            return output.strip()
 
     def run_ncsc(self, each_yang):
         ncsc_path = self.get_ncsrc_path()
@@ -422,9 +433,9 @@ ncs-yang
         self._run_bash_command_and_forget(ncs_yang_command)
 
     def caller(self, fun, dep_path=None, **kwargs):
-        ncsc_path = self.get_ncsrc_path()
         if dep_path is None:
             obj = MakeFile()
+            ncsc_path = self.get_ncsrc_path()
             if not Path(self.make_path).exists():
                 self.logger.error("couldn't able to find Makefile. Invalid path.")
                 self._exit
