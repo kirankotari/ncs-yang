@@ -47,9 +47,11 @@ class MakeFile:
 
             if name is None:
                 continue
+            value = None
             result = re.search(addvar, each)
-            value, = result.groups()
-            value = self.remove_comment(value)
+            if result:
+                value, = result.groups()
+                value = self.remove_comment(value)
             if value is None:
                 continue
             if '\\' not in value:
