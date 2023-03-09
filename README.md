@@ -7,13 +7,32 @@
 
 **ncs-yang** is a simple tool to compile specific yang file/s using **ncsc** and to create uml diagrams from it.
 
+```bash
+⋊> ~/k/i/ncs-yang on master $ ncs-yang --help
+
+ncs-yang 
+    <YangFile or YangFiles> [--uml | --jtox | --dsdl] 
+    --schema <yang>         [--json | --xml | --yml]
+    --yang-sync <settings.yml>          to collect yang files from remote machine
+    --payload <payload.json> 
+        <YangFile or YangFiles>         will return payload.xml
+    --payload <payload.xml>
+        <YangFile or YangFiles>         will return payload.json
+    --payload <payload.yml>             will return payload.json
+        <YangFile or YangFiles>         will return payload.xml
+    --log [info | debug]
+    --path <dependency yang path>
+    -h | --help
+    -v | --version
+```
+
 - [Introduction](#introduction)
 - [Pre-requisites](#pre-requisites)
 - [Installation and Downloads](#installation-and-downloads)
-- [Help](#help)
 - [Features](#features)
 - [FAQ](#faq)
 - [Bug Tracking and Support](#bug-tracking-and-support)
+- [Help](#help)
 - [License and Copyright](#license-and-copyright)
 - [Author and Thanks](#author-and-thanks)
 
@@ -41,27 +60,6 @@ Otherwise download it from PyPi, extract it and run the `setup.py` script
 If you're Interested in the source, you can always pull from the github repo:
 
 - From github `git clone https://github.com/kirankotari/ncs-yang.git`
-
-## Help
-
-```bash
-⋊> ~/k/i/ncs-yang on master $ ncs-yang --help
-
-ncs-yang 
-    <YangFile or YangFiles> [--uml | --jtox | --dsdl] 
-    --schema <yang>         [--json | --xml | --yml]
-    --yang-sync <settings.yml>          to collect yang files from remote machine
-    --payload <payload.json> 
-        <YangFile or YangFiles>         will return payload.xml
-    --payload <payload.xml>
-        <YangFile or YangFiles>         will return payload.json
-    --payload <payload.yml>             will return payload.json
-        <YangFile or YangFiles>         will return payload.xml
-    --log [info | debug]
-    --path <dependency yang path>
-    -h | --help
-    -v | --version
-```
 
 ## Features
 
@@ -113,6 +111,27 @@ ncs-yang
 
 - Please report any suggestions, bug reports, or annoyances with ncs-yang through the [Github bug tracker](https://github.com/kirankotari/ncs-yang/issues).
 
+
+## Help
+
+```bash
+⋊> ~/k/i/ncs-yang on master $ ncs-yang --help
+
+ncs-yang 
+    <YangFile or YangFiles> [--uml | --jtox | --dsdl] 
+    --schema <yang>         [--json | --xml | --yml]
+    --yang-sync <settings.yml>          to collect yang files from remote machine
+    --payload <payload.json> 
+        <YangFile or YangFiles>         will return payload.xml
+    --payload <payload.xml>
+        <YangFile or YangFiles>         will return payload.json
+    --payload <payload.yml>             will return payload.json
+        <YangFile or YangFiles>         will return payload.xml
+    --log [info | debug]
+    --path <dependency yang path>
+    -h | --help
+    -v | --version
+```
 
 ## License and Copyright
 
