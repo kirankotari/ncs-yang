@@ -5,7 +5,7 @@
 [![Downloads](https://pepy.tech/badge/ncs-yang)](https://pepy.tech/project/ncs-yang)
 [![Downloads](https://pepy.tech/badge/ncs-yang/week)](https://pepy.tech/project/ncs-yang/week)
 
-**ncs-yang** is a simple tool to compile specific yang file/s using **ncsc** and to create uml diagrams from it.
+**ncs-yang** is a simple tool to compile specific yang file/s using **ncsc**. Using this library we can convert REST/RESTCONF payloads to NETCONF payloads.
 
 - [Introduction](#introduction)
 - [Pre-requisites](#pre-requisites)
